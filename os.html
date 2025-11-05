@@ -1,0 +1,1365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Windows XP Professional</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Tahoma", "Arial", sans-serif;
+            user-select: none;
+        }
+        
+        body {
+            background-color: #008080;
+            height: 100vh;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        /* Desktop */
+        .desktop {
+            height: calc(100vh - 40px);
+            padding: 10px;
+            position: relative;
+            background-color: #008080;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" opacity="0.1"><rect width="100" height="100" fill="%23008080"/><path d="M0 0L100 100M100 0L0 100" stroke="white" stroke-width="1"/></svg>');
+        }
+        
+        /* Desktop Icons */
+        .desktop-icons {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 25px;
+            padding: 15px;
+        }
+        
+        .desktop-icon {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 80px;
+            text-align: center;
+            cursor: pointer;
+            padding: 5px;
+            border: 1px solid transparent;
+            border-radius: 3px;
+        }
+        
+        .desktop-icon:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+        }
+        
+        .desktop-icon.selected {
+            background-color: rgba(0, 82, 204, 0.4);
+            border: 1px dotted white;
+        }
+        
+        .desktop-icon img {
+            width: 32px;
+            height: 32px;
+            margin-bottom: 5px;
+            filter: drop-shadow(1px 1px 1px rgba(0,0,0,0.5));
+        }
+        
+        .desktop-icon span {
+            color: white;
+            font-size: 12px;
+            text-shadow: 1px 1px 1px black;
+        }
+        
+        /* Taskbar */
+        .taskbar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 40px;
+            background: linear-gradient(to bottom, #245edc 0%, #3a7be4 50%, #245edc 100%);
+            display: flex;
+            align-items: center;
+            padding: 0 5px;
+            border-top: 1px solid #0d3b9e;
+            z-index: 1000;
+        }
+        
+        .start-button {
+            height: 30px;
+            padding: 0 15px;
+            background: linear-gradient(to bottom, #6db323 0%, #5a9c1a 50%, #6db323 100%);
+            border: 1px outset #3a6b0a;
+            border-radius: 3px;
+            display: flex;
+            align-items: center;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            margin-right: 5px;
+            font-size: 13px;
+        }
+        
+        .start-button:hover {
+            background: linear-gradient(to bottom, #7dc333 0%, #6bac22 50%, #7dc333 100%);
+        }
+        
+        .start-button:active {
+            border: 1px inset #3a6b0a;
+        }
+        
+        .start-button img {
+            width: 16px;
+            height: 16px;
+            margin-right: 5px;
+        }
+        
+        .taskbar-items {
+            display: flex;
+            align-items: center;
+            flex-grow: 1;
+            gap: 3px;
+        }
+        
+        .taskbar-item {
+            height: 30px;
+            padding: 0 10px;
+            background: linear-gradient(to bottom, #e2e2e2 0%, #dbdbdb 50%, #d4d4d4 100%);
+            border: 1px outset #a3a3a3;
+            border-radius: 3px;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            max-width: 200px;
+            min-width: 150px;
+        }
+        
+        .taskbar-item.active {
+            background: linear-gradient(to bottom, #f5f5f5 0%, #e8e8e8 50%, #dcdcdc 100%);
+            border: 1px inset #7a7a7a;
+        }
+        
+        .taskbar-item img {
+            width: 16px;
+            height: 16px;
+            margin-right: 5px;
+        }
+        
+        .system-tray {
+            display: flex;
+            align-items: center;
+            color: white;
+            font-size: 11px;
+            padding: 0 10px;
+            height: 30px;
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px inset #0d3b9e;
+            border-radius: 3px;
+            margin-left: 5px;
+        }
+        
+        /* Windows */
+        .window {
+            position: absolute;
+            background-color: #ece9d8;
+            border: 2px outset #0a246a;
+            border-radius: 5px 5px 0 0;
+            box-shadow: 3px 3px 10px rgba(0, 0, 0, 0.5);
+            min-width: 300px;
+            min-height: 200px;
+            display: none;
+            flex-direction: column;
+            z-index: 100;
+            resize: both;
+            overflow: auto;
+        }
+        
+        .window.active {
+            display: flex;
+            z-index: 200;
+        }
+        
+        .window.maximized {
+            width: 100% !important;
+            height: calc(100vh - 40px) !important;
+            top: 0 !important;
+            left: 0 !important;
+            resize: none;
+        }
+        
+        .window-header {
+            background: linear-gradient(to right, #0a246a 0%, #245edc 100%);
+            color: white;
+            padding: 5px 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: bold;
+            cursor: move;
+            border-radius: 3px 3px 0 0;
+            font-size: 13px;
+        }
+        
+        .window-controls {
+            display: flex;
+            gap: 2px;
+        }
+        
+        .window-control {
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #d4d0c8;
+            border: 1px outset #808080;
+            font-weight: bold;
+            cursor: pointer;
+            color: black;
+            font-size: 12px;
+        }
+        
+        .window-control:hover {
+            background: #e8e4d8;
+        }
+        
+        .window-control:active {
+            border: 1px inset #808080;
+        }
+        
+        .window-content {
+            flex-grow: 1;
+            padding: 10px;
+            overflow: auto;
+            background-color: white;
+        }
+        
+        /* Start Menu */
+        .start-menu {
+            position: absolute;
+            bottom: 40px;
+            left: 0;
+            width: 350px;
+            background-color: #e2e2e2;
+            border: 2px outset #0a246a;
+            border-radius: 5px 5px 0 0;
+            display: none;
+            z-index: 1001;
+        }
+        
+        .start-menu.active {
+            display: block;
+        }
+        
+        .start-menu-header {
+            background: linear-gradient(to right, #0a246a 0%, #245edc 100%);
+            color: white;
+            padding: 10px 15px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .start-menu-header img {
+            width: 48px;
+            height: 48px;
+        }
+        
+        .start-menu-body {
+            display: flex;
+            height: 350px;
+        }
+        
+        .start-menu-left {
+            width: 60%;
+            padding: 10px;
+            background: linear-gradient(to bottom, #e2e2e2 0%, #d5d5d5 100%);
+        }
+        
+        .start-menu-right {
+            width: 40%;
+            padding: 10px;
+            background: white;
+        }
+        
+        .start-menu-items {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        
+        .start-menu-item {
+            padding: 8px 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-radius: 3px;
+        }
+        
+        .start-menu-item:hover {
+            background-color: #245edc;
+            color: white;
+        }
+        
+        .start-menu-item img {
+            width: 24px;
+            height: 24px;
+        }
+        
+        .start-menu-divider {
+            height: 1px;
+            background: #c0c0c0;
+            margin: 5px 0;
+        }
+        
+        /* Menu Bars */
+        .menu-bar {
+            display: flex;
+            background: linear-gradient(to bottom, #f5f5f5 0%, #e8e8e8 50%, #dcdcdc 100%);
+            border-bottom: 1px solid #a0a0a0;
+            padding: 2px 5px;
+            font-size: 12px;
+        }
+        
+        .menu-item {
+            padding: 3px 10px;
+            cursor: pointer;
+            border-radius: 3px;
+        }
+        
+        .menu-item:hover {
+            background-color: #245edc;
+            color: white;
+        }
+        
+        /* Paint Canvas */
+        .paint-canvas {
+            border: 1px solid #a0a0a0;
+            background-color: white;
+            cursor: crosshair;
+            display: block;
+            margin: 0 auto;
+        }
+        
+        .paint-tools {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .paint-tool {
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px outset #a0a0a0;
+            background-color: #e8e4d8;
+            cursor: pointer;
+        }
+        
+        .paint-tool.active {
+            background-color: #d4d0c8;
+            border: 1px inset #7a7a7a;
+        }
+        
+        /* File Explorer */
+        .file-explorer {
+            display: flex;
+            height: 100%;
+        }
+        
+        .sidebar {
+            width: 180px;
+            background-color: #f0f0f0;
+            border-right: 1px solid #a0a0a0;
+            padding: 10px;
+        }
+        
+        .sidebar-item {
+            padding: 5px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .sidebar-item:hover {
+            background-color: #e0e0e0;
+        }
+        
+        .sidebar-item img {
+            width: 16px;
+            height: 16px;
+        }
+        
+        .content {
+            flex-grow: 1;
+            padding: 10px;
+        }
+        
+        .files {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+            gap: 15px;
+        }
+        
+        .file {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            padding: 5px;
+            cursor: pointer;
+            border: 1px solid transparent;
+            border-radius: 3px;
+        }
+        
+        .file:hover {
+            background-color: #e0e0e0;
+        }
+        
+        .file.selected {
+            background-color: rgba(0, 82, 204, 0.2);
+            border: 1px dotted #0052cc;
+        }
+        
+        .file img {
+            width: 32px;
+            height: 32px;
+            margin-bottom: 5px;
+        }
+        
+        /* Browser */
+        .browser {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+        
+        .address-bar {
+            display: flex;
+            padding: 5px;
+            background: #f0f0f0;
+            border-bottom: 1px solid #a0a0a0;
+        }
+        
+        .address-input {
+            flex-grow: 1;
+            padding: 3px 5px;
+            border: 1px inset #a0a0a0;
+        }
+        
+        .browser-content {
+            flex-grow: 1;
+            padding: 10px;
+            background: white;
+            border: none;
+        }
+        
+        /* Welcome Screen */
+        .welcome-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(to bottom, #245edc 0%, #0a246a 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            z-index: 2000;
+        }
+        
+        .welcome-title {
+            font-size: 48px;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+        
+        .welcome-subtitle {
+            font-size: 24px;
+            margin-bottom: 40px;
+        }
+        
+        .login-button {
+            padding: 10px 30px;
+            background: linear-gradient(to bottom, #6db323 0%, #5a9c1a 50%, #6db323 100%);
+            border: 1px outset #3a6b0a;
+            border-radius: 5px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 18px;
+        }
+        
+        .login-button:hover {
+            background: linear-gradient(to bottom, #7dc333 0%, #6bac22 50%, #7dc333 100%);
+        }
+        
+        .login-button:active {
+            border: 1px inset #3a6b0a;
+        }
+        
+        /* Context Menu */
+        .context-menu {
+            position: absolute;
+            background: #f0f0f0;
+            border: 1px solid #a0a0a0;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
+            z-index: 300;
+            display: none;
+        }
+        
+        .context-menu-item {
+            padding: 5px 20px 5px 30px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        
+        .context-menu-item:hover {
+            background: #245edc;
+            color: white;
+        }
+        
+        .context-menu-divider {
+            height: 1px;
+            background: #c0c0c0;
+            margin: 2px 0;
+        }
+    </style>
+</head>
+<body>
+    <!-- Welcome Screen -->
+    <div class="welcome-screen" id="welcomeScreen">
+        <div class="welcome-title">Windows XP</div>
+        <div class="welcome-subtitle" id="userName">Professional</div>
+        <button class="login-button" id="loginButton">Click to Continue</button>
+    </div>
+
+    <!-- Desktop -->
+    <div class="desktop" id="desktop">
+        <div class="desktop-icons">
+            <div class="desktop-icon" data-window="myComputer">
+                <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PHJlY3QgeD0iMiIgeT0iMiIgd2lkdGg9IjI4IiBoZWlnaHQ9IjI4IiBmaWxsPSIjMDA4MDgwIi8+PHJlY3QgeD0iNCIgeT0iNCIgd2lkdGg9IjI0IiBoZWlnaHQ9IjI0IiBmaWxsPSIjZmZmIi8+PHJlY3QgeD0iNiIgeT0iNiIgd2lkdGg9IjIwIiBoZWlnaHQ9IjEwIiBmaWxsPSIjMDA4MDgwIi8+PHJlY3QgeD0iMTIiIHk9IjE4IiB3aWR0aD0iOCIgaGVpZ2h0PSI4IiBmaWxsPSIjMDA4MDgwIi8+PC9zdmc+" alt="My Computer">
+                <span>My Computer</span>
+            </div>
+            <div class="desktop-icon" data-window="myDocuments">
+                <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PHBhdGggZD0iTTYgNmgxMnY0aDh2MTZINlY2eiIgZmlsbD0iI2ZmZiIvPjxwYXRoIGQ9Ik0xOCA2bDggOEgxOFY2eiIgZmlsbD0iI2ZmZiIvPjxwYXRoIGQ9Ik0xOCA2bDggOEgxOFY2eiIgZmlsbD0iI2ZmZiIvPjxwYXRoIGQ9Ik0yNiAxMEgxOFY2aC0ydjRoLjh2LTJoOC40djJoLS4yeiIgZmlsbD0iIzAwODA4MCIvPjxwYXRoIGQ9Ik0xOCA2bDggOEgxOFY2eiIgZmlsbD0iIzAwODA4MCIvPjxwYXRoIGQ9Ik02IDZoMTJ2NEg2eiIgZmlsbD0iIzAwODA4MCIvPjxwYXRoIGQ9Ik02IDEwaDEydjE2SDZWMTAiIGZpbGw9IiMwMDgwODAiLz48L3N2Zz4=" alt="My Documents">
+                <span>My Documents</span>
+            </div>
+            <div class="desktop-icon" data-window="paint">
+                <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PHJlY3QgeD0iMiIgeT0iMiIgd2lkdGg9IjI4IiBoZWlnaHQ9IjI4IiBmaWxsPSIjZmZmIi8+PHBhdGggZD0iTTI2IDZINlYyNmgyMFY2eiIgZmlsbD0iI2ZmZiIvPjxwYXRoIGQ9Ik0yNiA2SDZWMjZoMjBWMTB6IiBmaWxsPSIjZmZmIi8+PHBhdGggZD0iTTI2IDZINlYyNmgyMFY2eiIgZmlsbD0iIzAwODA4MCIvPjxjaXJjbGUgY3g9IjEwIiBjeT0iMTAiIHI9IjQiIGZpbGw9IiNmZmYiLz48Y2lyY2xlIGN4PSIyMCIgY3k9IjE4IiByPSIzIiBmaWxsPSIjZmZmIi8+PHBhdGggZD0iTTE2IDIybC00IDQiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzAwODA4MCIgc3Ryb2tlLXdpZHRoPSIyIi8+PC9zdmc+" alt="Paint">
+                <span>Paint</span>
+            </div>
+            <div class="desktop-icon" data-window="browser">
+                <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PHJlY3QgeD0iMiIgeT0iMiIgd2lkdGg9IjI4IiBoZWlnaHQ9IjI0IiByeD0iMiIgZmlsbD0iI2ZmZiIvPjxwYXRoIGQ9Ik0yIDJoMjh2MjBIMnoiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzAwODA4MCIgc3Ryb2tlLXdpZHRoPSIyIi8+PHJlY3QgeD0iNCIgeT0iNiIgd2lkdGg9IjI0IiBoZWlnaHQ9IjE0IiBmaWxsPSIjZTBlMGUwIi8+PHJlY3QgeD0iNCIgeT0iNCIgd2lkdGg9IjI0IiBoZWlnaHQ9IjQiIGZpbGw9IiMwMDgwODAiLz48Y2lyY2xlIGN4PSI4IiBjeT0iNiIgcj0iMS41IiBmaWxsPSIjZmZmIi8+PGNpcmNsZSBjeD0iMTEiIGN5PSI2IiByPSIxLjUiIGZpbGw9IiNmZmYiLz48Y2lyY2xlIGN4PSIxNCIgY3k9IjYiIHI9IjEuNSIgZmlsbD0iI2ZmZiIvPjx0ZXh0IHg9IjE2IiB5PSIyMCIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjEwIiBmaWxsPSIjMDA4MDgwIj5XZWIgQnJvd3NlcjwvdGV4dD48L3N2Zz4=" alt="Web Browser">
+                <span>Internet Explorer</span>
+            </div>
+            <div class="desktop-icon" data-window="notepad">
+                <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PHJlY3QgeD0iMiIgeT0iMiIgd2lkdGg9IjI4IiBoZWlnaHQ9IjI4IiBmaWxsPSIjZmZmIi8+PHBhdGggZD0iTTIgMmgydjI4SDJ6TTMwIDJoMnYyOGgtMnpNMiAyaDI4djJIMnptMCAyNmgydjJIMnptMjggMGgydjJoLTJ6TTQgNGgyNHYyNEg0eiIgZmlsbD0iIzAwODA4MCIvPjxwYXRoIGQ9Ik02IDZoMjB2MjBINnoiIGZpbGw9IiNmZmYiLz48dGV4dCB4PSI4IiB5PSIxOCIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjEwIiBmaWxsPSIjMDA4MDgwIj5UZXh0IEZpbGU8L3RleHQ+PC9zdmc+" alt="Notepad">
+                <span>Notepad</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Taskbar -->
+    <div class="taskbar">
+        <div class="start-button" id="startButton">
+            <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxNiAxNiI+PHBhdGggZD0iTTIgMmgxMnYxMkgyek04IDR2OE0xMiA4SDRNNiA2aDRNNiAxMGg0IiBzdHJva2U9IiNmZmYiIHN0cm9rZS13aWR0aD0iMS41IiBmaWxsPSJub25lIi8+PC9zdmc+" alt="Start">
+            Start
+        </div>
+        <div class="taskbar-items" id="taskbarItems">
+            <!-- Taskbar items will be added dynamically -->
+        </div>
+        <div class="system-tray">
+            <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxNiAxNiI+PGNpcmNsZSBjeD0iOCIgY3k9IjEyIiByPSIyIiBmaWxsPSIjZmZmIi8+PHBhdGggZD0iTTggMkwxMCA2TDE0IDhMMTAgMTBMOCAxNEw2IDEwTDIgOEw2IDZaIiBmaWxsPSJub25lIiBzdHJva2U9IiNmZmYiIHN0cm9rZS13aWR0aD0iMS41Ii8+PC9zdmc+" alt="Speaker" style="margin-right: 5px;">
+            <span id="clock">10:30 AM</span>
+        </div>
+    </div>
+
+    <!-- Start Menu -->
+    <div class="start-menu" id="startMenu">
+        <div class="start-menu-header">
+            <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0OCA0OCI+PHBhdGggZD0iTTI0IDJMMzQgMTJIMjRWMloiIGZpbGw9IiNmZmYiLz48cGF0aCBkPSJNMjQgMkwzNCAxMkgyNFYyWiIgZmlsbD0iIzAwODA4MCIgb3BhY2l0eT0iMC4zIi8+PHBhdGggZD0iTTM0IDEyTDI0IDIyVjJMMzQgMTJaIiBmaWxsPSIjMDA4MDgwIi8+PHBhdGggZD0iTTM0IDEyTDI0IDIyVjJMMzQgMTJaIiBmaWxsPSIjZmZmIiBvcGFjaXR5PSIwLjIiLz48cGF0aCBkPSJNMjQgMjJMMTQgMTJIMjRWMjJaIiBmaWxsPSIjZmZmIi8+PHBhdGggZD0iTTI0IDIyTDE0IDEySDI0VjIyWiIgZmlsbD0iIzAwODA4MCIgb3BhY2l0eT0iMC4zIi8+PHBhdGggZD0iTTE0IDEyTDI0IDJWMjJMMTQgMTJaIiBmaWxsPSIjMDA4MDgwIi8+PHBhdGggZD0iTTE0IDEyTDI0IDJWMjJMMTQgMTJaIiBmaWxsPSIjZmZmIiBvcGFjaXR5PSIwLjIiLz48L3N2Zz4=" alt="Windows Logo">
+            <div id="startMenuUserName">User</div>
+        </div>
+        <div class="start-menu-body">
+            <div class="start-menu-left">
+                <div class="start-menu-items">
+                    <div class="start-menu-item" data-window="browser">
+                        <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHJlY3QgeD0iMiIgeT0iNCIgd2lkdGg9IjIwIiBoZWlnaHQ9IjE2IiByeD0iMiIgZmlsbD0iIzAwODA4MCIvPjxjaXJjbGUgY3g9IjYiIGN5PSI3IiByPSIxLjUiIGZpbGw9IiNmZmYiLz48Y2lyY2xlIGN4PSIxMCIgY3k9IjciIHI9IjEuNSIgZmlsbD0iI2ZmZiIvPjxjaXJjbGUgY3g9IjE0IiBjeT0iNyIgcj0iMS41IiBmaWxsPSIjZmZmIi8+PHBhdGggZD0iTTQgMTBoMTZ2OEg0eiIgZmlsbD0iI2UwZTBlMCIvPjwvc3ZnPg==" alt="Internet Explorer">
+                        <span>Internet Explorer</span>
+                    </div>
+                    <div class="start-menu-item" data-window="myDocuments">
+                        <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZD0iTTYgNmgxMnY0aDR2MTBINlY2eiIgZmlsbD0iIzAwODA4MCIvPjxwYXRoIGQ9Ik0xOCA2bDQgNEgxOFY2eiIgZmlsbD0iI2ZmZiIvPjxwYXRoIGQ9Ik0xOCA2bDQgNEgxOFY2eiIgZmlsbD0iIzAwODA4MCIgb3BhY2l0eT0iMC4zIi8+PC9zdmc+" alt="My Documents">
+                        <span>My Documents</span>
+                    </div>
+                    <div class="start-menu-item" data-window="myComputer">
+                        <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHJlY3QgeD0iNCIgeT0iNCIgd2lkdGg9IjE2IiBoZWlnaHQ9IjE2IiByeD0iMSIgZmlsbD0iIzAwODA4MCIvPjxwYXRoIGQ9Ik02IDZIMThWMTBINlY2WiIgZmlsbD0iI2ZmZiIvPjxwYXRoIGQ9Ik0xMCAxNEgxNFYxOEgxMFYxNFoiIGZpbGw9IiMwMDgwODAiLz48L3N2Zz4=" alt="My Computer">
+                        <span>My Computer</span>
+                    </div>
+                    <div class="start-menu-divider"></div>
+                    <div class="start-menu-item" data-window="paint">
+                        <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHJlY3QgeD0iNCIgeT0iNCIgd2lkdGg9IjE2IiBoZWlnaHQ9IjE2IiBmaWxsPSIjZmZmIi8+PHBhdGggZD0iTTQgNGgxNnYxNkg0eiIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMDA4MDgwIiBzdHJva2Utd2lkdGg9IjIiLz48Y2lyY2xlIGN4PSI4IiBjeT0iOCIgcj0iMiIgZmlsbD0iIzAwODA4MCIvPjxjaXJjbGUgY3g9IjE1IiBjeT0iMTQiIHI9IjEuNSIgZmlsbD0iIzAwODA4MCIvPjxwYXRoIGQ9Ik0xMiAxNkw4IDIwIiBmaWxsPSJub25lIiBzdHJva2U9IiMwMDgwODAiIHN0cm9rZS13aWR0aD0iMS41Ii8+PC9zdmc+" alt="Paint">
+                        <span>Paint</span>
+                    </div>
+                    <div class="start-menu-item" data-window="notepad">
+                        <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHJlY3QgeD0iNCIgeT0iNCIgd2lkdGg9IjE2IiBoZWlnaHQ9IjE2IiBmaWxsPSIjZmZmIi8+PHBhdGggZD0iTTQgNGgydjE2SDR6TTIwIDRoMnYxNmgtMnpNNCA0aDE2djJINHptMCAxNmgydjJINHptMTYgMGgydjJoLTJ6TTYgNmgxMnYxMkg2eiIgZmlsbD0iIzAwODA4MCIvPjwvc3ZnPg==" alt="Notepad">
+                        <span>Notepad</span>
+                    </div>
+                    <div class="start-menu-divider"></div>
+                    <div class="start-menu-item">
+                        <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PGNpcmNsZSBjeD0iMTIiIGN5PSIxMiIgcj0iMTAiIGZpbGw9IiMwMDgwODAiLz48cGF0aCBkPSJNMTIgNnY2bDQgMiIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZmZmIiBzdHJva2Utd2lkdGg9IjIiLz48L3N2Zz4=" alt="Clock">
+                        <span>All Programs</span>
+                    </div>
+                </div>
+            </div>
+            <div class="start-menu-right">
+                <div class="start-menu-items">
+                    <div class="start-menu-item">
+                        <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZD0iTTEwIDE2aDR2NGgtNHYtNHpNMTIgMkM2LjQ4IDIgMiA2LjQ4IDIgMTJzNC40OCAxMCAxMCAxMCAxMC00LjQ4IDEwLTEwUzE3LjUyIDIgMTIgMnptMCAxOGMtNC40MSAwLTgtMy41OS04LThzMy41OS04IDgtOCA4IDMuNTkgOCA4LTMuNTkgOC04IDh6IiBmaWxsPSIjMDA4MDgwIi8+PHBhdGggZD0iTTEzIDdoLTJ2NWg1di0yaC0zeiIgZmlsbD0iIzAwODA4MCIvPjwvc3ZnPg==" alt="Help">
+                        <span>Help and Support</span>
+                    </div>
+                    <div class="start-menu-item">
+                        <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZD0iTTE1LjUgMTRoLS43OWwtLjI4LS4yN0MxNS40MSAxMi41OSAxNiAxMS4xMSAxNiA5LjUgMTYgNS45MSAxMy4wOSAzIDkuNSAzUzMgNS45MSAzIDkuNSA1LjkxIDE2IDkuNSAxNmMxLjYxIDAgMy4wOS0uNTkgNC4yMy0xLjU3bC4yNy4yOHYuNzlsNSA0Ljk5TDIwLjQ5IDE5bC00Ljk5LTV6bS02IDBDNy4wMSAxNCA1IDExLjk5IDUgOS41UzcuMDEgNSA5LjUgNSAxNCA3LjAxIDE0IDkuNSAxMS45OSAxNCA5LjUgMTR6IiBmaWxsPSIjMDA4MDgwIi8+PC9zdmc+" alt="Search">
+                        <span>Search</span>
+                    </div>
+                    <div class="start-menu-item">
+                        <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZD0iTTEwIDloMnY3aC0yeiIgZmlsbD0iIzAwODA4MCIvPjxwYXRoIGQ9Ik0xOC41IDZINXYxMmgxMy41YzEuOTMgMCAzLjUtMS41NyAzLjUtMy41di01YzAtMS45My0xLjU3LTMuNS0zLjUtMy41ek0xOSAxNC41YzAgLjgyLS42OCAxLjUtMS41IDEuNUg3VjhoMTEuNWMuODIgMCAxLjUuNjggMS41IDEuNXY1eiIgZmlsbD0iIzAwODA4MCIvPjwvc3ZnPg==" alt="Run">
+                        <span>Run...</span>
+                    </div>
+                    <div class="start-menu-divider"></div>
+                    <div class="start-menu-item" id="logoutButton">
+                        <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZD0iTTEwLjA5IDE2LjU5TDExLjUgMTVsMy41NCAzLjU0TDE5IDEybC0xLjQxLTEuNDFMMTMgMTcuMTdsLTIuOTEtMi45MXpNMTkgM0g1Yy0xLjEgMC0yIC45LTIgMnY0aDJWNWgxNHYxNEg1di0ySDN2NGMwIDEuMS45IDIgMiAyaDE0YzEuMSAwIDItLjkgMi0yVjVjMC0xLjEtLjktMi0yLTJ6IiBmaWxsPSIjMDA4MDgwIi8+PC9zdmc+" alt="Log Off">
+                        <span>Log Off</span>
+                    </div>
+                    <div class="start-menu-item" id="shutdownButton">
+                        <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZD0iTTEzIDNoLTJ2MTJoMlYzem00IDguNDVsMS40Mi0xLjQyIDIuNTQgMi41NC0yLjU0IDIuNTQtMS40Mi0xLjQyIDEuMTYtMS4xNkwxNyAxMmwtMS4xNi0xLjE2TDE3IDkuNDV6TTYgMTMuNTRMNC41OCAxNSAyaDIuODRMMTAgMTJsLTIuNTgtM0g0LjU4TDYgMTAuNDYgNC44NCAxMkw2IDEzLjU0eiIgZmlsbD0iIzAwODA4MCIvPjwvc3ZnPg==" alt="Shutdown">
+                        <span>Turn Off Computer</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Context Menu -->
+    <div class="context-menu" id="contextMenu">
+        <div class="context-menu-item" id="contextOpen">Open</div>
+        <div class="context-menu-item">Explore</div>
+        <div class="context-menu-item">Search...</div>
+        <div class="context-menu-divider"></div>
+        <div class="context-menu-item">Send To</div>
+        <div class="context-menu-item">Copy</div>
+        <div class="context-menu-divider"></div>
+        <div class="context-menu-item">Create Shortcut</div>
+        <div class="context-menu-item">Delete</div>
+        <div class="context-menu-item">Rename</div>
+        <div class="context-menu-divider"></div>
+        <div class="context-menu-item">Properties</div>
+    </div>
+
+    <!-- Windows -->
+    <div class="window" id="myComputer" style="width: 600px; height: 400px; top: 50px; left: 100px;">
+        <div class="window-header">
+            <span>My Computer</span>
+            <div class="window-controls">
+                <div class="window-control minimize">_</div>
+                <div class="window-control maximize">□</div>
+                <div class="window-control close">×</div>
+            </div>
+        </div>
+        <div class="menu-bar">
+            <div class="menu-item">File</div>
+            <div class="menu-item">Edit</div>
+            <div class="menu-item">View</div>
+            <div class="menu-item">Favorites</div>
+            <div class="menu-item">Tools</div>
+            <div class="menu-item">Help</div>
+        </div>
+        <div class="window-content">
+            <div class="file-explorer">
+                <div class="sidebar">
+                    <div class="sidebar-item">
+                        <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxNiAxNiI+PHBhdGggZD0iTTggM0wxMCA1SDE0VjE0SDJWNUg2TDggM1pNNyA1VjRIN1Y1Wk0yIDVWMTRIMTZWNUgxMFY0SDhWNUg3VjRINlY1SDJaIiBmaWxsPSIjMDA4MDgwIi8+PC9zdmc+" alt="Folders">
+                        Folders
+                    </div>
+                    <div class="sidebar-item">
+                        <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxNiAxNiI+PHJlY3QgeD0iMiIgeT0iMiIgd2lkdGg9IjEyIiBoZWlnaHQ9IjEyIiByeD0iMSIgZmlsbD0iIzAwODA4MCIvPjxjaXJjbGUgY3g9IjgiIGN5PSI4IiByPSIzIiBmaWxsPSIjZmZmIi8+PC9zdmc+" alt="Desktop">
+                        Desktop
+                    </div>
+                    <div class="sidebar-item">
+                        <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxNiAxNiI+PHBhdGggZD0iTTggM0wxMCA1SDE0VjE0SDJWNUg2TDggM1pNNyA1VjRIN1Y1Wk0yIDVWMTRIMTZWNUgxMFY0SDhWNUg3VjRINlY1SDJaIiBmaWxsPSIjMDA4MDgwIi8+PC9zdmc+" alt="My Documents">
+                        My Documents
+                    </div>
+                    <div class="sidebar-item">
+                        <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxNiAxNiI+PHBhdGggZD0iTTggM0wxMCA1SDE0VjE0SDJWNUg2TDggM1pNNyA1VjRIN1Y1Wk0yIDVWMTRIMTZWNUgxMFY0SDhWNUg3VjRINlY1SDJaIiBmaWxsPSIjMDA4MDgwIi8+PC9zdmc+" alt="My Computer">
+                        My Computer
+                    </div>
+                </div>
+                <div class="content">
+                    <div class="files">
+                        <div class="file">
+                            <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PHJlY3QgeD0iMiIgeT0iMiIgd2lkdGg9IjI4IiBoZWlnaHQ9IjI4IiBmaWxsPSIjMDA4MDgwIi8+PHJlY3QgeD0iNCIgeT0iNCIgd2lkdGg9IjI0IiBoZWlnaHQ9IjI0IiBmaWxsPSIjZmZmIi8+PHJlY3QgeD0iNiIgeT0iNiIgd2lkdGg9IjIwIiBoZWlnaHQ9IjEwIiBmaWxsPSIjMDA4MDgwIi8+PHJlY3QgeD0iMTIiIHk9IjE4IiB3aWR0aD0iOCIgaGVpZ2h0PSI4IiBmaWxsPSIjMDA4MDgwIi8+PC9zdmc+" alt="Hard Drive">
+                            <span>Local Disk (C:)</span>
+                        </div>
+                        <div class="file">
+                            <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PGNpcmNsZSBjeD0iMTYiIGN5PSIxNiIgcj0iMTQiIGZpbGw9IiMwMDgwODAiLz48Y2lyY2xlIGN4PSIxNiIgY3k9IjE2IiByPSIxMSIgZmlsbD0iI2ZmZiIvPjxjaXJjbGUgY3g9IjE2IiBjeT0iMTYiIHI9IjMiIGZpbGw9IiMwMDgwODAiLz48L3N2Zz4=" alt="CD Drive">
+                            <span>CD Drive (D:)</span>
+                        </div>
+                        <div class="file">
+                            <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PHJlY3QgeD0iNCIgeT0iNCIgd2lkdGg9IjI0IiBoZWlnaHQ9IjI0IiByeD0iMiIgZmlsbD0iIzAwODA4MCIvPjxyZWN0IHg9IjYiIHk9IjYiIHdpZHRoPSIyMCIgaGVpZ2h0PSIyMCIgcng9IjEiIGZpbGw9IiNmZmYiLz48cmVjdCB4PSI4IiB5PSI4IiB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIHJ4PSIwLjUiIGZpbGw9IiMwMDgwODAiLz48L3N2Zz4=" alt="Floppy">
+                            <span>Floppy (A:)</span>
+                        </div>
+                        <div class="file">
+                            <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PHBhdGggZD0iTTYgNmgxMnY0aDh2MTZINlY2eiIgZmlsbD0iIzAwODA4MCIvPjxwYXRoIGQ9Ik0xOCA2bDggOEgxOFY2eiIgZmlsbD0iI2ZmZiIvPjxwYXRoIGQ9Ik0xOCA2bDggOEgxOFY2eiIgZmlsbD0iIzAwODA4MCIgb3BhY2l0eT0iMC4zIi8+PC9zdmc+" alt="Control Panel">
+                            <span>Control Panel</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="window" id="myDocuments" style="width: 500px; height: 400px; top: 80px; left: 150px;">
+        <div class="window-header">
+            <span>My Documents</span>
+            <div class="window-controls">
+                <div class="window-control minimize">_</div>
+                <div class="window-control maximize">□</div>
+                <div class="window-control close">×</div>
+            </div>
+        </div>
+        <div class="menu-bar">
+            <div class="menu-item">File</div>
+            <div class="menu-item">Edit</div>
+            <div class="menu-item">View</div>
+            <div class="menu-item">Favorites</div>
+            <div class="menu-item">Tools</div>
+            <div class="menu-item">Help</div>
+        </div>
+        <div class="window-content">
+            <div class="file-explorer">
+                <div class="sidebar">
+                    <div class="sidebar-item">
+                        <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxNiAxNiI+PHBhdGggZD0iTTggM0wxMCA1SDE0VjE0SDJWNUg2TDggM1pNNyA1VjRIN1Y1Wk0yIDVWMTRIMTZWNUgxMFY0SDhWNUg3VjRINlY1SDJaIiBmaWxsPSIjMDA4MDgwIi8+PC9zdmc+" alt="Folders">
+                        Folders
+                    </div>
+                    <div class="sidebar-item">
+                        <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxNiAxNiI+PHBhdGggZD0iTTggM0wxMCA1SDE0VjE0SDJWNUg2TDggM1pNNyA1VjRIN1Y1Wk0yIDVWMTRIMTZWNUgxMFY0SDhWNUg3VjRINlY1SDJaIiBmaWxsPSIjMDA4MDgwIi8+PC9zdmc+" alt="My Documents">
+                        My Documents
+                    </div>
+                    <div class="sidebar-item">
+                        <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxNiAxNiI+PHBhdGggZD0iTTggM0wxMCA1SDE0VjE0SDJWNUg2TDggM1pNNyA1VjRIN1Y1Wk0yIDVWMTRIMTZWNUgxMFY0SDhWNUg3VjRINlY1SDJaIiBmaWxsPSIjMDA4MDgwIi8+PC9zdmc+" alt="My Computer">
+                        My Computer
+                    </div>
+                </div>
+                <div class="content">
+                    <div class="files">
+                        <div class="file">
+                            <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PHBhdGggZD0iTTYgNmgxMnY0aDh2MTZINlY2eiIgZmlsbD0iIzAwODA4MCIvPjxwYXRoIGQ9Ik0xOCA2bDggOEgxOFY2eiIgZmlsbD0iI2ZmZiIvPjxwYXRoIGQ9Ik0xOCA2bDggOEgxOFY2eiIgZmlsbD0iIzAwODA4MCIgb3BhY2l0eT0iMC4zIi8+PC9zdmc+" alt="Document">
+                            <span>Resume.doc</span>
+                        </div>
+                        <div class="file">
+                            <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PHBhdGggZD0iTTYgNmgxMnY0aDh2MTZINlY2eiIgZmlsbD0iIzAwODA4MCIvPjxwYXRoIGQ9Ik0xOCA2bDggOEgxOFY2eiIgZmlsbD0iI2ZmZiIvPjxwYXRoIGQ9Ik0xOCA2bDggOEgxOFY2eiIgZmlsbD0iIzAwODA4MCIgb3BhY2l0eT0iMC4zIi8+PC9zdmc+" alt="Document">
+                            <span>Notes.txt</span>
+                        </div>
+                        <div class="file">
+                            <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PHBhdGggZD0iTTYgNmgxMnY0aDh2MTZINlY2eiIgZmlsbD0iIzAwODA4MCIvPjxwYXRoIGQ9Ik0xOCA2bDggOEgxOFY2eiIgZmlsbD0iI2ZmZiIvPjxwYXRoIGQ9Ik0xOCA2bDggOEgxOFY2eiIgZmlsbD0iIzAwODA4MCIgb3BhY2l0eT0iMC4zIi8+PC9zdmc+" alt="Document">
+                            <span>Budget.xls</span>
+                        </div>
+                        <div class="file">
+                            <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PHBhdGggZD0iTTYgNmgxMnY0aDh2MTZINlY2eiIgZmlsbD0iIzAwODA4MCIvPjxwYXRoIGQ9Ik0xOCA2bDggOEgxOFY2eiIgZmlsbD0iI2ZmZiIvPjxwYXRoIGQ9Ik0xOCA2bDggOEgxOFY2eiIgZmlsbD0iIzAwODA4MCIgb3BhY2l0eT0iMC4zIi8+PC9zdmc+" alt="Folder">
+                            <span>My Pictures</span>
+                        </div>
+                        <div class="file">
+                            <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PHBhdGggZD0iTTYgNmgxMnY0aDh2MTZINlY2eiIgZmlsbD0iIzAwODA4MCIvPjxwYXRoIGQ9Ik0xOCA2bDggOEgxOFY2eiIgZmlsbD0iI2ZmZiIvPjxwYXRoIGQ9Ik0xOCA2bDggOEgxOFY2eiIgZmlsbD0iIzAwODA4MCIgb3BhY2l0eT0iMC4zIi8+PC9zdmc+" alt="Folder">
+                            <span>My Music</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="window" id="paint" style="width: 600px; height: 500px; top: 60px; left: 200px;">
+        <div class="window-header">
+            <span>Paint - Untitled</span>
+            <div class="window-controls">
+                <div class="window-control minimize">_</div>
+                <div class="window-control maximize">□</div>
+                <div class="window-control close">×</div>
+            </div>
+        </div>
+        <div class="menu-bar">
+            <div class="menu-item">File</div>
+            <div class="menu-item">Edit</div>
+            <div class="menu-item">View</div>
+            <div class="menu-item">Image</div>
+            <div class="menu-item">Colors</div>
+            <div class="menu-item">Help</div>
+        </div>
+        <div class="window-content">
+            <div class="paint-tools">
+                <div class="paint-tool active" data-tool="pencil" title="Pencil">✏️</div>
+                <div class="paint-tool" data-tool="brush" title="Brush">🖌️</div>
+                <div class="paint-tool" data-tool="eraser" title="Eraser">🧽</div>
+                <div class="paint-tool" data-tool="fill" title="Fill">🪣</div>
+                <div class="paint-tool" data-tool="text" title="Text">A</div>
+                <div class="paint-tool" data-tool="line" title="Line">/</div>
+                <div class="paint-tool" data-tool="rect" title="Rectangle">□</div>
+                <div class="paint-tool" data-tool="ellipse" title="Ellipse">○</div>
+            </div>
+            <canvas class="paint-canvas" id="paintCanvas" width="550" height="380"></canvas>
+        </div>
+    </div>
+
+    <div class="window" id="browser" style="width: 700px; height: 500px; top: 40px; left: 120px;">
+        <div class="window-header">
+            <span>Internet Explorer</span>
+            <div class="window-controls">
+                <div class="window-control minimize">_</div>
+                <div class="window-control maximize">□</div>
+                <div class="window-control close">×</div>
+            </div>
+        </div>
+        <div class="menu-bar">
+            <div class="menu-item">File</div>
+            <div class="menu-item">Edit</div>
+            <div class="menu-item">View</div>
+            <div class="menu-item">Favorites</div>
+            <div class="menu-item">Tools</div>
+            <div class="menu-item">Help</div>
+        </div>
+        <div class="address-bar">
+            <span>Address</span>
+            <input type="text" class="address-input" value="http://www.microsoft.com/windowsxp" readonly>
+        </div>
+        <div class="window-content">
+            <iframe class="browser-content" src="about:blank" id="browserFrame"></iframe>
+        </div>
+    </div>
+
+    <div class="window" id="notepad" style="width: 500px; height: 400px; top: 100px; left: 180px;">
+        <div class="window-header">
+            <span>Notepad - Untitled</span>
+            <div class="window-controls">
+                <div class="window-control minimize">_</div>
+                <div class="window-control maximize">□</div>
+                <div class="window-control close">×</div>
+            </div>
+        </div>
+        <div class="menu-bar">
+            <div class="menu-item">File</div>
+            <div class="menu-item">Edit</div>
+            <div class="menu-item">Format</div>
+            <div class="menu-item">View</div>
+            <div class="menu-item">Help</div>
+        </div>
+        <div class="window-content">
+            <textarea style="width: 100%; height: 100%; border: none; padding: 5px; font-family: 'Courier New', monospace; font-size: 12px; resize: none;">Welcome to Windows XP!
+
+This is a simulation of the classic Windows XP operating system.
+
+You can:
+- Open programs from the Start menu
+- Double-click desktop icons
+- Use the taskbar to switch between windows
+- Right-click for context menus
+
+Enjoy the nostalgia!</textarea>
+        </div>
+    </div>
+
+    <script>
+        // DOM Elements
+        const welcomeScreen = document.getElementById('welcomeScreen');
+        const desktop = document.getElementById('desktop');
+        const startButton = document.getElementById('startButton');
+        const startMenu = document.getElementById('startMenu');
+        const taskbarItems = document.getElementById('taskbarItems');
+        const clock = document.getElementById('clock');
+        const userName = document.getElementById('userName');
+        const startMenuUserName = document.getElementById('startMenuUserName');
+        const loginButton = document.getElementById('loginButton');
+        const logoutButton = document.getElementById('logoutButton');
+        const shutdownButton = document.getElementById('shutdownButton');
+        const contextMenu = document.getElementById('contextMenu');
+        const contextOpen = document.getElementById('contextOpen');
+        
+        // Windows
+        const windows = document.querySelectorAll('.window');
+        const desktopIcons = document.querySelectorAll('.desktop-icon');
+        const startMenuItems = document.querySelectorAll('.start-menu-item');
+        
+        // Paint
+        const paintCanvas = document.getElementById('paintCanvas');
+        const paintTools = document.querySelectorAll('.paint-tool');
+        const ctx = paintCanvas.getContext('2d');
+        
+        // Browser
+        const browserFrame = document.getElementById('browserFrame');
+        
+        // State
+        let activeWindow = null;
+        let isDrawing = false;
+        let currentTool = 'pencil';
+        let userNameValue = 'User';
+        let lastX, lastY;
+        
+        // Initialize
+        function init() {
+            // Set up event listeners
+            startButton.addEventListener('click', toggleStartMenu);
+            loginButton.addEventListener('click', login);
+            logoutButton.addEventListener('click', logout);
+            shutdownButton.addEventListener('click', shutdown);
+            
+            // Desktop icons
+            desktopIcons.forEach(icon => {
+                icon.addEventListener('dblclick', () => {
+                    const windowId = icon.getAttribute('data-window');
+                    openWindow(windowId);
+                });
+                
+                icon.addEventListener('click', (e) => {
+                    // Select icon
+                    desktopIcons.forEach(i => i.classList.remove('selected'));
+                    icon.classList.add('selected');
+                    
+                    // Show context menu on right click
+                    if (e.button === 2) {
+                        e.preventDefault();
+                        showContextMenu(e.clientX, e.clientY, icon.getAttribute('data-window'));
+                    }
+                });
+            });
+            
+            // Start menu items
+            startMenuItems.forEach(item => {
+                if (item.getAttribute('data-window')) {
+                    item.addEventListener('click', () => {
+                        const windowId = item.getAttribute('data-window');
+                        openWindow(windowId);
+                        toggleStartMenu();
+                    });
+                }
+            });
+            
+            // Window controls
+            windows.forEach(window => {
+                const closeBtn = window.querySelector('.close');
+                const minimizeBtn = window.querySelector('.minimize');
+                const maximizeBtn = window.querySelector('.maximize');
+                const header = window.querySelector('.window-header');
+                
+                closeBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    closeWindow(window.id);
+                });
+                minimizeBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    minimizeWindow(window.id);
+                });
+                maximizeBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    maximizeWindow(window.id);
+                });
+                
+                // Make window draggable
+                makeDraggable(window, header);
+                
+                // Activate window on click
+                window.addEventListener('mousedown', () => {
+                    activateWindow(window.id);
+                });
+            });
+            
+            // Paint tools
+            paintTools.forEach(tool => {
+                tool.addEventListener('click', () => {
+                    paintTools.forEach(t => t.classList.remove('active'));
+                    tool.classList.add('active');
+                    currentTool = tool.getAttribute('data-tool');
+                });
+            });
+            
+            // Paint canvas
+            setupPaintCanvas();
+            
+            // Context menu
+            contextOpen.addEventListener('click', () => {
+                const windowId = contextMenu.getAttribute('data-target');
+                openWindow(windowId);
+                hideContextMenu();
+            });
+            
+            // Update clock
+            updateClock();
+            setInterval(updateClock, 60000);
+            
+            // Close start menu when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!startMenu.contains(e.target) && e.target !== startButton) {
+                    startMenu.classList.remove('active');
+                }
+            });
+            
+            // Hide context menu
+            document.addEventListener('click', hideContextMenu);
+            document.addEventListener('contextmenu', (e) => {
+                if (e.target.classList.contains('desktop-icon')) return;
+                hideContextMenu();
+            });
+            
+            // Prevent default context menu
+            desktop.addEventListener('contextmenu', (e) => {
+                if (!e.target.classList.contains('desktop-icon')) {
+                    e.preventDefault();
+                }
+            });
+        }
+        
+        // Login function
+        function login() {
+            const name = prompt("Enter your name:", "User");
+            if (name) {
+                userNameValue = name;
+                userName.textContent = `${name}'s Desktop`;
+                startMenuUserName.textContent = name;
+            }
+            welcomeScreen.style.display = 'none';
+            desktop.style.display = 'block';
+        }
+        
+        // Logout function
+        function logout() {
+            if (confirm("Are you sure you want to log off?")) {
+                welcomeScreen.style.display = 'flex';
+                desktop.style.display = 'none';
+                
+                // Close all windows
+                windows.forEach(window => {
+                    window.classList.remove('active');
+                });
+                
+                // Clear taskbar
+                taskbarItems.innerHTML = '';
+                activeWindow = null;
+                
+                toggleStartMenu();
+            }
+        }
+        
+        // Shutdown function
+        function shutdown() {
+            if (confirm("Are you sure you want to turn off the computer?")) {
+                alert("Windows is shutting down...");
+                // In a real application, you would close the window/tab
+            }
+        }
+        
+        // Toggle start menu
+        function toggleStartMenu() {
+            startMenu.classList.toggle('active');
+        }
+        
+        // Show context menu
+        function showContextMenu(x, y, target) {
+            contextMenu.style.display = 'block';
+            contextMenu.style.left = `${x}px`;
+            contextMenu.style.top = `${y}px`;
+            contextMenu.setAttribute('data-target', target);
+        }
+        
+        // Hide context menu
+        function hideContextMenu() {
+            contextMenu.style.display = 'none';
+        }
+        
+        // Activate window
+        function activateWindow(windowId) {
+            // Deactivate all windows
+            windows.forEach(window => {
+                window.classList.remove('active');
+                const taskbarItem = document.querySelector(`.taskbar-item[data-window="${window.id}"]`);
+                if (taskbarItem) {
+                    taskbarItem.classList.remove('active');
+                }
+            });
+            
+            // Activate selected window
+            const window = document.getElementById(windowId);
+            if (window) {
+                window.classList.add('active');
+                const taskbarItem = document.querySelector(`.taskbar-item[data-window="${windowId}"]`);
+                if (taskbarItem) {
+                    taskbarItem.classList.add('active');
+                }
+                activeWindow = windowId;
+                
+                // Bring to front
+                windows.forEach(w => {
+                    w.style.zIndex = '100';
+                });
+                window.style.zIndex = '200';
+            }
+        }
+        
+        // Open window
+        function openWindow(windowId) {
+            // If window is already open, just activate it
+            if (document.getElementById(windowId).classList.contains('active')) {
+                activateWindow(windowId);
+                return;
+            }
+            
+            // Close any active window
+            if (activeWindow) {
+                document.getElementById(activeWindow).classList.remove('active');
+            }
+            
+            // Open the new window
+            const window = document.getElementById(windowId);
+            window.classList.add('active');
+            activateWindow(windowId);
+            
+            // Add to taskbar
+            addToTaskbar(windowId);
+            
+            // Position window if it's not already positioned
+            if (!window.style.top || window.style.top === '0px') {
+                positionWindow(window);
+            }
+            
+            // Special setup for certain windows
+            if (windowId === 'browser') {
+                browserFrame.src = 'https://en.wikipedia.org/wiki/Windows_XP';
+            }
+        }
+        
+        // Close window
+        function closeWindow(windowId) {
+            const window = document.getElementById(windowId);
+            window.classList.remove('active');
+            removeFromTaskbar(windowId);
+            
+            if (activeWindow === windowId) {
+                activeWindow = null;
+            }
+        }
+        
+        // Minimize window
+        function minimizeWindow(windowId) {
+            const window = document.getElementById(windowId);
+            window.classList.remove('active');
+            
+            const taskbarItem = document.querySelector(`.taskbar-item[data-window="${windowId}"]`);
+            if (taskbarItem) {
+                taskbarItem.classList.remove('active');
+            }
+            
+            if (activeWindow === windowId) {
+                activeWindow = null;
+            }
+        }
+        
+        // Maximize window
+        function maximizeWindow(windowId) {
+            const window = document.getElementById(windowId);
+            if (window.classList.contains('maximized')) {
+                window.classList.remove('maximized');
+                // In a real app, you would restore the previous size and position
+            } else {
+                window.classList.add('maximized');
+            }
+        }
+        
+        // Position window
+        function positionWindow(window) {
+            // Simple positioning - in a real app, you'd want more sophisticated logic
+            const windowsOpen = document.querySelectorAll('.window.active').length;
+            window.style.top = `${50 + (windowsOpen * 30)}px`;
+            window.style.left = `${50 + (windowsOpen * 30)}px`;
+        }
+        
+        // Add to taskbar
+        function addToTaskbar(windowId) {
+            // Check if already in taskbar
+            if (document.querySelector(`.taskbar-item[data-window="${windowId}"]`)) {
+                return;
+            }
+            
+            const window = document.getElementById(windowId);
+            const title = window.querySelector('.window-header span').textContent;
+            
+            const taskbarItem = document.createElement('div');
+            taskbarItem.className = 'taskbar-item';
+            taskbarItem.setAttribute('data-window', windowId);
+            
+            // Add appropriate icon
+            const icon = document.createElement('img');
+            if (windowId === 'myComputer') {
+                icon.src = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxNiAxNiI+PHJlY3QgeD0iMiIgeT0iMiIgd2lkdGg9IjEyIiBoZWlnaHQ9IjEyIiByeD0iMSIgZmlsbD0iIzAwODA4MCIvPjxwYXRoIGQ9Ik00IDRIOFY4SDRWNFpNOCA0SDhWNEg4VjRaTTQgOEg4VjEySDRWOFpNOCA4SDhWMTJIOFY4WiIgZmlsbD0iI2ZmZiIvPjwvc3ZnPg==';
+            } else if (windowId === 'myDocuments') {
+                icon.src = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxNiAxNiI+PHBhdGggZD0iTTQgMmg4djVoNHY3SDRWMlpNNiA0VjRINlY0Wk00IDRINHYxMEgxMlY3SDhWNkg0VjRaIiBmaWxsPSIjMDA4MDgwIi8+PC9zdmc+';
+            } else if (windowId === 'paint') {
+                icon.src = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxNiAxNiI+PHJlY3QgeD0iMiIgeT0iMiIgd2lkdGg9IjEyIiBoZWlnaHQ9IjEyIiBmaWxsPSIjZmZmIi8+PHBhdGggZD0iTTIgMmgxMnYxMkgyeiIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMDA4MDgwIiBzdHJva2Utd2lkdGg9IjIiLz48Y2lyY2xlIGN4PSI1IiBjeT0iNSIgcj0iMS41IiBmaWxsPSIjMDA4MDgwIi8+PGNpcmNsZSBjeD0iMTEiIGN5PSIxMCIgcj0iMSIgZmlsbD0iIzAwODA4MCIvPjxwYXRoIGQ9Ik04IDEybC0yIDIiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzAwODA4MCIgc3Ryb2tlLXdpZHRoPSIxIi8+PC9zdmc+';
+            } else if (windowId === 'browser') {
+                icon.src = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxNiAxNiI+PHJlY3QgeD0iMiIgeT0iNCIgd2lkdGg9IjEyIiBoZWlnaHQ9IjkiIHJ4PSIxIiBmaWxsPSIjZmZmIi8+PHBhdGggZD0iTTIgNGgxMnY5SDJ6IiBmaWxsPSJub25lIiBzdHJva2U9IiMwMDgwODAiIHN0cm9rZS13aWR0aD0iMSIvPjxyZWN0IHg9IjMiIHk9IjUiIHdpZHRoPSIxMCIgaGVpZ2h0PSI2IiBmaWxsPSIjZTBlMGUwIi8+PHJlY3QgeD0iMyIgeT0iNCIgd2lkdGg9IjEwIiBoZWlnaHQ9IjIiIGZpbGw9IiMwMDgwODAiLz48Y2lyY2xlIGN4PSI0LjUiIGN5PSI1IiByPSIwLjUiIGZpbGw9IiNmZmYiLz48Y2lyY2xlIGN4PSI2LjUiIGN5PSI1IiByPSIwLjUiIGZpbGw9IiNmZmYiLz48Y2lyY2xlIGN4PSI4LjUiIGN5PSI1IiByPSIwLjUiIGZpbGw9IiNmZmYiLz48L3N2Zz4=';
+            } else if (windowId === 'notepad') {
+                icon.src = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxNiAxNiI+PHJlY3QgeD0iMiIgeT0iMiIgd2lkdGg9IjEyIiBoZWlnaHQ9IjEyIiBmaWxsPSIjZmZmIi8+PHBhdGggZD0iTTIgMmgxdjEySDJ6TTE1IDJoMXYxMmgtMXpNMiAyaDEydjJIMnptMCAxMmgxdjJIMnptMTIgMGgxdjJoLTF6TTMgNGgxMHY4SDN6IiBmaWxsPSIjMDA4MDgwIi8+PC9zdmc+';
+            }
+            taskbarItem.appendChild(icon);
+            
+            const text = document.createElement('span');
+            text.textContent = title;
+            taskbarItem.appendChild(text);
+            
+            taskbarItem.addEventListener('click', () => {
+                if (document.getElementById(windowId).classList.contains('active')) {
+                    minimizeWindow(windowId);
+                } else {
+                    openWindow(windowId);
+                }
+            });
+            
+            taskbarItems.appendChild(taskbarItem);
+        }
+        
+        // Remove from taskbar
+        function removeFromTaskbar(windowId) {
+            const taskbarItem = document.querySelector(`.taskbar-item[data-window="${windowId}"]`);
+            if (taskbarItem) {
+                taskbarItem.remove();
+            }
+        }
+        
+        // Make window draggable
+        function makeDraggable(element, handle) {
+            let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+            
+            handle.onmousedown = dragMouseDown;
+            
+            function dragMouseDown(e) {
+                if (element.classList.contains('maximized')) return;
+                
+                e = e || window.event;
+                e.preventDefault();
+                // Get the mouse cursor position at startup
+                pos3 = e.clientX;
+                pos4 = e.clientY;
+                document.onmouseup = closeDragElement;
+                // Call a function whenever the cursor moves
+                document.onmousemove = elementDrag;
+            }
+            
+            function elementDrag(e) {
+                e = e || window.event;
+                e.preventDefault();
+                // Calculate the new cursor position
+                pos1 = pos3 - e.clientX;
+                pos2 = pos4 - e.clientY;
+                pos3 = e.clientX;
+                pos4 = e.clientY;
+                // Set the element's new position
+                element.style.top = (element.offsetTop - pos2) + "px";
+                element.style.left = (element.offsetLeft - pos1) + "px";
+            }
+            
+            function closeDragElement() {
+                // Stop moving when mouse button is released
+                document.onmouseup = null;
+                document.onmousemove = null;
+            }
+        }
+        
+        // Setup paint canvas
+        function setupPaintCanvas() {
+            // Set background to white
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, paintCanvas.width, paintCanvas.height);
+            
+            // Set up drawing events
+            paintCanvas.addEventListener('mousedown', startDrawing);
+            paintCanvas.addEventListener('mousemove', draw);
+            paintCanvas.addEventListener('mouseup', stopDrawing);
+            paintCanvas.addEventListener('mouseout', stopDrawing);
+        }
+        
+        // Start drawing
+        function startDrawing(e) {
+            isDrawing = true;
+            const rect = paintCanvas.getBoundingClientRect();
+            lastX = e.clientX - rect.left;
+            lastY = e.clientY - rect.top;
+        }
+        
+        // Draw on canvas
+        function draw(e) {
+            if (!isDrawing) return;
+            
+            const rect = paintCanvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            ctx.lineWidth = 2;
+            ctx.lineCap = 'round';
+            ctx.strokeStyle = 'black';
+            
+            if (currentTool === 'pencil') {
+                ctx.beginPath();
+                ctx.moveTo(lastX, lastY);
+                ctx.lineTo(x, y);
+                ctx.stroke();
+            } else if (currentTool === 'brush') {
+                ctx.lineWidth = 5;
+                ctx.beginPath();
+                ctx.moveTo(lastX, lastY);
+                ctx.lineTo(x, y);
+                ctx.stroke();
+            } else if (currentTool === 'eraser') {
+                ctx.strokeStyle = 'white';
+                ctx.lineWidth = 10;
+                ctx.beginPath();
+                ctx.moveTo(lastX, lastY);
+                ctx.lineTo(x, y);
+                ctx.stroke();
+            }
+            
+            lastX = x;
+            lastY = y;
+        }
+        
+        // Stop drawing
+        function stopDrawing() {
+            isDrawing = false;
+        }
+        
+        // Update clock
+        function updateClock() {
+            const now = new Date();
+            let hours = now.getHours();
+            let minutes = now.getMinutes();
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+            
+            hours = hours % 12;
+            hours = hours ? hours : 12; // the hour '0' should be '12'
+            minutes = minutes < 10 ? '0' + minutes : minutes;
+            
+            clock.textContent = `${hours}:${minutes} ${ampm}`;
+        }
+        
+        // Initialize the application
+        init();
+    </script>
+</body>
+</html>
